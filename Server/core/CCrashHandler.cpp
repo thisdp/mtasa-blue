@@ -22,8 +22,15 @@
     extern "C" WINDOW* m_wndMenu;
     extern "C" WINDOW* m_wndInput;
     extern "C" bool g_bNoCurses;
-    #include <client/linux/handler/exception_handler.h>
-    bool DumpCallback( const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded );
+    #ifdef __APPLE__
+        #include <client/mac/handler/exception_handler.h>
+
+        // From https://archive.fo/DJvyQ
+        bool DumpCallback(const char* _dump_dir, const char* _minidump_id, void *context, bool succeeded );
+    #else
+        #include <client/linux/handler/exception_handler.h>
+        bool DumpCallback( const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded );
+    #endif
     static SString ms_strDumpPathFilename;
 #endif
 static SString ms_strDumpPath;
@@ -69,8 +76,12 @@ void CCrashHandler::Init ( const SString& strInServerPath )
         #ifdef WITH_BACKTRACE_ONLY
             signal ( SIGSEGV, HandleExceptionGlobal );
         #else
-            google_breakpad::MinidumpDescriptor descriptor( ms_strDumpPath );
-            static google_breakpad::ExceptionHandler eh( descriptor, NULL, DumpCallback, NULL, true, -1 );
+            #ifdef __APPLE__
+                static google_breakpad::ExceptionHandler eh(ms_strDumpPath, NULL, DumpCallback, NULL, true, NULL);
+            #else
+                google_breakpad::MinidumpDescriptor descriptor( ms_strDumpPath );
+                static google_breakpad::ExceptionHandler eh( descriptor, NULL, DumpCallback, NULL, true, -1 );
+            #endif
         #endif
     #endif
 }
@@ -131,11 +142,17 @@ static void SaveBacktraceSummary()
 }
 
 
-// Linux crash callback when using google-breakpad
+// Linux or macOS crash callback when using google-breakpad
+#ifdef __APPLE__
+bool DumpCallback(const char* _dump_dir, const char* _minidump_id, void *context, bool succeeded )
+{
+#else
 bool DumpCallback( const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded )
 {
+    const char* _dump_dir = descriptor.path();
+#endif
     // Set inital dump file name (Safeish)
-    File::Rename( descriptor.path(), ms_strDumpPathFilename );
+    File::Rename( _dump_dir, ms_strDumpPathFilename );
 
     // Set final dump file name (Not so safe)
     time_t pTime = time( NULL );
