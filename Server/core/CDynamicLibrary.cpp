@@ -86,7 +86,12 @@ bool CDynamicLibrary::Load ( const char* szFilename )
             LocalFree ( lpMsgBuf );
         }
     #else
-        m_hModule = dlopen ( szFilename, RTLD_NOW | RTLD_DEEPBIND );
+        #ifdef __APPLE__
+            // RTLD_DEEPBIND is a default for macOS
+            m_hModule = dlopen ( szFilename, RTLD_NOW );
+        #else
+            m_hModule = dlopen ( szFilename, RTLD_NOW | RTLD_DEEPBIND );
+        #endif
 
         // Output error if needed
         if ( !m_hModule )
