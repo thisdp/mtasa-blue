@@ -9,8 +9,7 @@
 *
 *****************************************************************************/
 
-#ifndef __PLATFORM_H
-#define __PLATFORM_H
+#pragma once
 
 extern "C" bool g_bSilent;
 extern "C" bool g_bNoTopBar;
@@ -34,7 +33,7 @@ extern "C" bool g_bNoTopBar;
     #define MTA_OS_STRING       "BSD"
     #define MTA_LIB_EXTENSION   ".so"
 #elif defined(__APPLE__) && defined(__MACH__)
-    #define MTA_OS_STRING       "Mac OS X"
+    #define MTA_OS_STRING       "macOS"
     #define MTA_LIB_EXTENSION   ".so"
 #else
     #error "Unsupported operating system"
@@ -105,5 +104,3 @@ extern "C" bool g_bNoTopBar;
 // This function should be used instead of mkdir to preserve multiplatform
 // compatibility
 extern int mymkdir ( const char* dirname );
-
-#endif
