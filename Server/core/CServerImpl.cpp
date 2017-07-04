@@ -711,12 +711,14 @@ void CServerImpl::HandleInput ( void )
         iStdIn = _getwch();
     }
 #else
+    #ifndef __APPLE__
     if( !g_bNoCurses )
     {
         if ( get_wch(&iStdIn) == ERR )
             iStdIn = 0;
     }
     else
+    #endif
     {
         iStdIn = getwchar();
 
