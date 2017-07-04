@@ -18,17 +18,19 @@
 #endif
 
 #ifndef WIN32
-    #include <ncursesw/curses.h>
     extern "C" WINDOW* m_wndMenu;
     extern "C" WINDOW* m_wndInput;
     extern "C" bool g_bNoCurses;
     #ifdef __APPLE__
+        #include <curses.h>
         #include <client/mac/handler/exception_handler.h>
 
         // From https://archive.fo/DJvyQ
         bool DumpCallback(const char* _dump_dir, const char* _minidump_id, void *context, bool succeeded );
     #else
+        #include <ncursesw/curses.h>
         #include <client/linux/handler/exception_handler.h>
+
         bool DumpCallback( const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded );
     #endif
     static SString ms_strDumpPathFilename;
