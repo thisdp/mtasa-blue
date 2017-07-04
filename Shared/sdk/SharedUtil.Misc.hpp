@@ -32,6 +32,11 @@
     #endif
 #endif
 
+#if defined(__APPLE__)
+    // Needed for __cpuid_count
+    #include <cpuid.h>
+#endif
+
 CCriticalSection CRefCountable::ms_CS;
 std::map < uint, uint > ms_ReportAmountMap;
 SString ms_strProductRegistryPath;
@@ -1676,6 +1681,23 @@ namespace SharedUtil
                     _asm {shr ebx, 24}
                     _asm {mov eax, ebx}
     #endif
+#elif defined(__APPLE__)
+                    // This might be expensive. See https://stackoverflow.com/a/40398183/1517394 and https://stackoverflow.com/a/18866681/1517394
+                    uint32_t CPUInfo[4];
+
+                    // this requires <cpuid.h>, remove that header if this is removed
+                    __cpuid_count(1, 0, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
+
+                    /* CPUInfo[1] is EBX, bits 24-31 are APIC ID */
+                    if ((CPUInfo[3] & (1 << 9)) == 0)
+                        return 0; /* no APIC on chip */
+
+                    int cpu = (unsigned)CPUInfo[1] >> 24;
+                    if (cpu < 0) {
+                        return 0;
+                    }
+
+                    return cpu;
 #else
                     // This should work on Linux
                     return sched_getcpu();
